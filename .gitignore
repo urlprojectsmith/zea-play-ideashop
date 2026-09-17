@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build output
+dist/
+build/
+frontend/dist/
+frontend/build/
+.next/
+
+# Python environments and caches
+.venv/
+venv/
+backend/.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+
+# Runtime data
+*.db
+*.sqlite
+*.sqlite3
+*.log
+media/
+backend/media/
+backend/assets/avatars/custom/
+assets/avatars/custom/
+rustup-init.exe
+
+# Secrets and local environment files
+.env
+.env.*
+backend/.env
+frontend/.env
+frontend/.env.local
+presence-server/.env
+
+# Keep safe examples
+!.env.example
+!.env.vps.example
+!*.env.example
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

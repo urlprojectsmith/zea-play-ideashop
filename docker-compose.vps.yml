@@ -1,0 +1,91 @@
+services:
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-vee_task_manager}
+      POSTGRES_USER: ${POSTGRES_USER:-vee_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.vps}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vee_user} -d ${POSTGRES_DB:-vee_task_manager}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file:
+      - .env.vps
+    environment:
+      VEE_DATABASE_URL: postgresql://${POSTGRES_USER:-vee_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vee_task_manager}
+      VEE_CACHE_REDIS_URL: redis://redis:6379
+      VEE_ENVIRONMENT: production
+      VEE_DEPLOYMENT_FRONTEND_HOST: ${FRONTEND_DEPLOY_HOST}
+      VEE_DEPLOYMENT_BACKEND_HOST: ${BACKEND_DEPLOY_HOST}
+    ports:
+      - "4211:6211"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 6211"
+
+  reporting-worker:
+    build: ./backend
+    restart: unless-stopped
+    env_file:
+      - .env.vps
+    environment:
+      VEE_DATABASE_URL: postgresql://${POSTGRES_USER:-vee_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vee_task_manager}
+      VEE_ENVIRONMENT: production
+      REPORTING_WORKER_INTERVAL: ${REPORTING_WORKER_INTERVAL:-60}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "python -m app.reporting.worker"
+
+  presence:
+    build: ./presence-server
+    restart: unless-stopped
+    environment:
+      PRESENCE_PORT: 6212
+      PRESENCE_REDIS_URL: redis://redis:6379
+      PRESENCE_JWT_SECRET: ${VEE_JWT_SECRET_KEY}
+      PRESENCE_JWT_ALGORITHM: HS256
+      PRESENCE_EVENTS_CHANNEL: presence:events
+    ports:
+      - "4212:6212"
+    depends_on:
+      redis:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_PRESENCE_URL: ${VITE_PRESENCE_URL}
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    environment:
+      FRONTEND_DEPLOY_HOST: ${FRONTEND_DEPLOY_HOST}
+      BACKEND_DEPLOY_HOST: ${BACKEND_DEPLOY_HOST}
+    depends_on:
+      - backend
+      - presence
+
+volumes:
+  postgres_data:
+  redis_data:

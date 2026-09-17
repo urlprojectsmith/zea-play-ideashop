@@ -1,0 +1,57 @@
+```css
+.mainContainer {
+    display: flex;
+    width: 100%;
+    max-height: 100vh;
+    overflow: hidden;
+}
+
+.mainContent {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    height: calc(100vh - 60px);
+    padding-right: 10px;
+}
+
+
+.controlPanel {
+    width: 300px;
+    padding: 20px;
+    background-color: #1a1a1a;
+    border-left: 1px solid #333;
+    overflow-y: auto;
+    height: calc(100vh - 60px);
+    padding-right: 10px;
+}
+
+/* Add custom scrollbar styling */
+.mainContent::-webkit-scrollbar,
+.controlPanel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.mainContent::-webkit-scrollbar-track,
+.controlPanel::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+.mainContent::-webkit-scrollbar-thumb,
+.controlPanel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.mainContent::-webkit-scrollbar-thumb:hover,
+.controlPanel::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Add Firefox scrollbar compatibility */
+.mainContent,
+.controlPanel {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.1);
+}
+```
